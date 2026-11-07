@@ -1,0 +1,7 @@
+# Loader 补丁：把本包插进 profile 的插件图。
+#
+# `id` 是 Loader 里的插件行 id，同时也是本插件在设置行里的命名空间（ENTRY_ID），
+# 必须与 client.js 顶部的 ENTRY_ID 一致；`name` 是包名（npm name / link 目标）。
+- insert:
+    - id: theme-isaf
+      name: 'dsh-theme-isaf'
