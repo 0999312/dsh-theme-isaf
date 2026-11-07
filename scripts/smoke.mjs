@@ -198,17 +198,21 @@ check('apply 下了一层 override，source = 包名', () => {
 })
 
 check('装了外壳样式与 CRT 扫描线层', () => {
-  const shellStyle = appended.find((node) => node.dataset && node.dataset.pluginCss === PACKAGE_ID + '/shell-v6')
+  const shellStyle = appended.find((node) => node.dataset && node.dataset.pluginCss === PACKAGE_ID + '/shell-v7')
   assert.ok(shellStyle, '没有外壳 <style>')
   assert.match(shellStyle.textContent, /tsk-crt/)
   assert.match(shellStyle.textContent, /padding:12px/)
-  assert.match(shellStyle.textContent, /rgba\(233,239,247,\.22\)/)
+  assert.match(shellStyle.textContent, /radial-gradient\(ellipse 92% 78%/)
+  assert.match(shellStyle.textContent, /rgba\(233,239,247,\.10\)/)
   assert.match(shellStyle.textContent, /color-mix\(in srgb,var\(--dsw-alias-bg-base\) 84%,transparent\)/)
   assert.match(shellStyle.textContent, /color-mix\(in srgb,var\(--dsw-specific-sidebar-fill\) 86%,transparent\)/)
   assert.doesNotMatch(shellStyle.textContent, /backdrop-filter:blur/)
   assert.match(shellStyle.textContent, /#root\{background:transparent/) 
   assert.match(shellStyle.textContent, /border-radius:0/)
   assert.match(shellStyle.textContent, /repeating-linear-gradient\(to right/)
+  assert.match(shellStyle.textContent, /rgba\(0,0,0,\.045\)/)
+  assert.match(shellStyle.textContent, /tsk-crt-sweep/)
+  assert.match(shellStyle.textContent, /tsk-crt::after/)
   assert.ok(appended.some((node) => node.className === 'tsk-crt'), '没有 CRT 扫描线层')
 })
 

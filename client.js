@@ -33,8 +33,8 @@ window.__ModuleLoader__.load({
     const LOG_PREFIX = '[theme-isaf]'
     const ROW_SLOT = 'settings.general.item'
     const STYLE_ID = PACKAGE_ID + '/settings-row'
-    const SHELL_STYLE_ID = PACKAGE_ID + '/shell-v6'
-    /** 与 dsh-boot-video 约定：固定用户素材 id；主题只读探测，导入失败就退回 GIF。 */
+    const SHELL_STYLE_ID = PACKAGE_ID + '/shell-v7'
+    /** 与 dsh-boot-video 约定：固定用户素材 id；主题只读探测，导入失败就退回启动封面。 */
     const BOOT_VIDEO_FIXED_ASSET = 'u-isaf-boot'
     const BOOT_VIDEO_SOURCE_KEY = 'dsh-boot-video:source'
     const BOOT_VIDEO_ASSET_KEY = 'dsh-boot-video:asset'
@@ -221,19 +221,22 @@ window.__ModuleLoader__.load({
      * 应用外壳的 CRT 化：12px 壁纸边框 + 深蓝直角玻璃舱 + HUD 网格/扫描线。
      *
      * 参考 fro2asa70fpf1.png：主面板是深蓝半透明面板、细描边、无圆角；
-     * 壁纸从 12px 边框和面板后透出，正文叠在 88%–90% 的深蓝底上。
+     * 壁纸从 12px 边框和面板后透出，正文叠在 84%–90% 的深蓝底上。
+     *
+     * 参考 startup-poster.png 的冷蓝辉光：中心留亮、边缘压暗、青色高光，
+     * 不直接叠海报图本身，避免画面里出现两个互相打架的 ISAF 标识。
      */
     const SHELL_CSS = [
       // 12px 壁纸边框由 body padding 产生——不依赖 #root 的直接子节点结构。
       // 壁纸放在 html 上、body 透明：12px 内边距和半透明面板都能透出它。
       'html{background-color:var(--dsw-alias-bg-base)!important;',
-      'background-image:linear-gradient(rgba(233,239,247,.22),rgba(233,239,247,.22)),url("/theme-isaf/assets/wallpaper.png")!important;',
+      'background-image:radial-gradient(ellipse 92% 78% at 50% 40%,rgba(233,239,247,.10) 0%,rgba(233,239,247,.20) 48%,rgba(233,239,247,.52) 100%),url("/theme-isaf/assets/wallpaper.png")!important;',
       'background-position:center,center!important;',
       'background-size:cover,cover!important;',
       'background-repeat:no-repeat,no-repeat!important;',
       'background-attachment:fixed,fixed!important}',
       'html:has(body[data-ds-dark-theme]){',
-      'background-image:linear-gradient(rgba(3,9,18,.38),rgba(3,9,18,.38)),url("/theme-isaf/assets/wallpaper.png")!important}',
+      'background-image:radial-gradient(ellipse 92% 78% at 50% 40%,rgba(3,9,18,.18) 0%,rgba(3,9,18,.30) 50%,rgba(3,9,18,.56) 100%),url("/theme-isaf/assets/wallpaper.png")!important}',
       'body{box-sizing:border-box;padding:12px;',
       '--dsw-alias-button-elevated-fill:rgba(14,33,53,.92)!important;',
       '--dsw-alias-button-floating-fill:rgba(11,27,44,.96)!important;',
@@ -248,7 +251,8 @@ window.__ModuleLoader__.load({
       // 采样成黑色，壁纸会被整片遮掉；只用 color-mix 的半透明底色。
       '#root > div[class*="_frame"],#root div[class*="_frame"]{',
       'background:transparent!important;border-radius:0!important;',
-      'box-shadow:0 0 0 1px rgba(126,183,230,.30),0 22px 70px rgba(0,0,0,.38),inset 0 0 46px rgba(3,9,18,.16)}',
+      'box-shadow:0 0 0 1px rgba(126,183,230,.34),0 0 42px rgba(100,190,240,.15),0 22px 70px rgba(0,0,0,.38),inset 0 0 46px rgba(3,9,18,.16)}',
+      '#root div[class*="_frame"]::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;z-index:2;pointer-events:none;background:linear-gradient(90deg,rgba(126,183,230,0),rgba(126,183,230,.55),rgba(100,224,234,.32),rgba(126,183,230,0))}',
       '#root [class*="_sidebarCol"]{',
       'background:rgba(9,24,39,.90)!important;',
       'background:color-mix(in srgb,var(--dsw-specific-sidebar-fill) 86%,transparent)!important;',
@@ -268,24 +272,32 @@ window.__ModuleLoader__.load({
       '#root [data-conversation-content],#root [data-conversation-scroll]{background:transparent!important;border-radius:0!important}',
       '.hHd-Xa_buildVersion{background:var(--dsw-alias-brand-primary)!important;color:#fff!important;border-radius:0!important}',
       '.Dc7zOa_header .cm-btn,.cm-btn.cm-stat-header{background:rgba(14,33,53,.92)!important;color:var(--dsw-alias-label-primary)!important;border:1px solid rgba(126,183,230,.28)!important;border-radius:0!important;box-shadow:0 0 0 1px rgba(3,9,18,.30)!important}',
-      '.tsk-crt{position:fixed;inset:12px;z-index:900;pointer-events:none;opacity:.28;border-radius:0;',
+      '.tsk-crt{position:fixed;inset:12px;z-index:900;pointer-events:none;opacity:.34;border-radius:0;overflow:hidden;',
       'background:',
       'repeating-linear-gradient(to right,rgba(126,183,230,.025) 0px,rgba(126,183,230,.025) 1px,rgba(126,183,230,0) 1px,rgba(126,183,230,0) 72px),',
       'repeating-linear-gradient(to bottom,rgba(126,183,230,.022) 0px,rgba(126,183,230,.022) 1px,rgba(126,183,230,0) 1px,rgba(126,183,230,0) 72px),',
-      'repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 3px,rgba(0,0,0,.035) 3px,rgba(0,0,0,.035) 4px),',
-      'radial-gradient(ellipse at center,rgba(0,0,0,0) 60%,rgba(0,0,0,.10) 100%)}',
+      'repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 3px,rgba(0,0,0,.045) 3px,rgba(0,0,0,.045) 4px),',
+      'radial-gradient(ellipse at center,rgba(0,0,0,0) 58%,rgba(0,0,0,.14) 100%),',
+      'linear-gradient(to bottom,rgba(126,183,230,0),rgba(126,183,230,.035) 48%,rgba(126,183,230,0));',
+      'box-shadow:inset 0 0 120px rgba(0,0,0,.16);',
+      'animation:tsk-crt-flicker 7s steps(1,end) infinite}',
+      '.tsk-crt::after{content:"";position:absolute;left:0;right:0;top:-24%;height:24%;pointer-events:none;',
+      'background:linear-gradient(to bottom,rgba(126,183,230,0),rgba(126,183,230,.10),rgba(126,183,230,0));',
+      'animation:tsk-crt-sweep 9s linear infinite}',
+      '@keyframes tsk-crt-flicker{0%,100%{opacity:.34}43%{opacity:.315}44%{opacity:.34}71%{opacity:.325}72%{opacity:.34}}',
+      '@keyframes tsk-crt-sweep{0%{transform:translateY(0)}100%{transform:translateY(520%)}}',
       'body:has(#root > [data-dsh-boot]) .tsk-crt{display:none}',
       '@media (max-width:767px){body{padding:0}',
       '.tsk-crt{inset:0;border-radius:0}',
       '#root > div[class*="_frame"],#root div[class*="_frame"]{border-radius:0;box-shadow:none}}',
-      '@media (prefers-reduced-motion:reduce){.tsk-crt{opacity:.26}}'
+      '@media (prefers-reduced-motion:reduce){.tsk-crt{opacity:.26;animation:none}.tsk-crt::after{display:none}}'
     ].join('')
 
     /**
      * 把主题自带的启动 MP4 接到 dsh-boot-video（若已安装）。
      *
      * 只在用户尚未选择素材时补默认值，绝不覆盖已有选择；boot-video 缺席、
-     * 导入关闭或网络失败都静默退回 index.js 的 BOOT_CSS / GIF。
+     * 导入关闭或网络失败都静默退回 index.js 的 BOOT_CSS / 启动封面。
      */
     async function linkBootVideo() {
       try {

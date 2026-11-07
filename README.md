@@ -12,7 +12,10 @@
 - **三种强调色**：ISAF 蓝 / 磷光青 / 警示琥珀，可在「设置 → 通用 → 强调色」切换。
 - **壁纸舱**：2560×1440 的 ISAF 徽章壁纸铺在 `html` 上，应用四周保留 12px 壁纸边框，
   主面板、侧栏、聊天区用 `color-mix` 半透明玻璃层让徽章透出。
-- **直角 HUD**：主面板、侧栏、按钮均为直角；72px 网格 + 4px 周期轻扫描线 + 轻暗角。
+- **海报式辉光**：壁纸叠一层从中心向外压暗的冷蓝径向遮罩，参考
+  `startup-poster.png` 的发光徽章层次，但不直接叠海报图，避免两个 ISAF 标识互相打架。
+- **直角 HUD**：主面板、侧栏、按钮均为直角；72px 网格 + 4px 轻扫描线 +
+  极轻滚动扫描 + 轻暗角。中心留亮、边缘压暗，让壁纸上的 ISAF 徽章更突出。
 - **启动动画**：自带 `assets/startup.mp4`（H.264 / 638×478 / 5.53s）。
   与 `dsh-boot-video` 联动时完整播放；没有 boot-video 时用 `startup-poster.png` 做首帧封面。
 - **无 backdrop-filter**：面板只用半透明底色。Chrome 在透明祖先链下会把 backdrop
@@ -25,7 +28,7 @@
 ### 方式一：从 tgz 安装
 
 ```powershell
-dsh plugin --profile web add <path-to>\dsh-theme-isaf-0.1.6.tgz
+dsh plugin --profile web add <path-to>\dsh-theme-isaf-0.1.7.tgz
 ```
 
 ### 方式二：开发期直接链目录
@@ -56,7 +59,7 @@ dsh plugin --profile web list
 5. 没有 boot-video，或用户关闭了开机动画：`BOOT_CSS` 使用 `startup-poster.png`
    做静态首帧，不会退回默认 HARNESS 字标。
 
-当前 0.1.6 的启动 MP4 就是新的 ISAF 预简报视频，约 5.53 秒，包含音轨；
+当前 0.1.7 的启动 MP4 就是新的 ISAF 预简报视频，约 5.53 秒，包含音轨；
 播放结束后自动淡出，点击或 Esc 可跳过。
 
 ## 目录
@@ -127,5 +130,7 @@ node scripts/smoke.mjs
 
 ## 版本
 
-当前 `0.1.6`：启动动画替换为 `theme_assets/isaf_prebriefing.mp4`，
-新增 `startup-poster.png` 作为 boot-video 缺席时的首帧封面。
+当前 `0.1.7`：以 `startup-poster.png` 为配色参考，给壁纸加中心辉光/边缘压暗，
+CRT 增加极轻的滚动扫描与轻微闪烁，仍保持 84%–90% 深蓝面板的可读性。
+启动动画仍为 `theme_assets/isaf_prebriefing.mp4`，`startup-poster.png` 继续作为
+boot-video 缺席时的首帧封面。
