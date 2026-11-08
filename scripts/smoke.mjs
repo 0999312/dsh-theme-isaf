@@ -216,12 +216,60 @@ check('装了外壳样式与 CRT 扫描线层', () => {
   assert.ok(appended.some((node) => node.className === 'tsk-crt'), '没有 CRT 扫描线层')
 })
 
+check('外壳样式不再碰 _frame 的 ::before（Windows 标题栏拖拽区）', () => {
+  const shellStyle = appended.find((node) => node.dataset && node.dataset.pluginCss === PACKAGE_ID + '/shell-v7')
+  assert.ok(shellStyle, '没有外壳 <style>')
+  // 布局用 [data-windows-titlebar] ._frame::before 撑出 -webkit-app-region:drag
+  // 的标题栏拖拽条；主题再用 ID 选择器覆盖 height 就会让整窗无法拖动。
+  assert.doesNotMatch(shellStyle.textContent, /_frame"\]::before/, '主题又给 _frame 加了 ::before，会压扁拖拽条')
+  // 顶部 1px 冷蓝高光改用 inset box-shadow 保留。
+  assert.match(shellStyle.textContent, /inset 0 1px 0 rgba\(126,183,230,\.45\)/, '顶部高光应改用 inset box-shadow')
+})
+
+check('强调色 chip 选中态用自身强调色，不再借浅色 dimmed token', () => {
+  const rowStyle = appended.find((node) => node.dataset && node.dataset.pluginCss === PACKAGE_ID + '/settings-row')
+  assert.ok(rowStyle, '没有设置行 <style>')
+  assert.doesNotMatch(rowStyle.textContent, /button-primary-dimmed/)
+  assert.match(rowStyle.textContent, /color-mix\(in srgb,var\(--tsk-dot-light\) 24%,transparent\)/)
+})
+
+check('设置 / 菜单 / 提示等表面 token 在 light 下也是深底', () => {
+  const tokens = calls.override[0].tokens
+  const surfaceNames = [
+    '--dsw-alias-bg-module-platform',
+    '--dsw-alias-bg-multi-select',
+    '--dsw-alias-interactive-bg-hover-solid',
+    '--dsw-alias-button-ghost-active-fill',
+    '--dsw-alias-button-ghost-active-hover',
+    '--dsw-specific-tip',
+    '--dsw-menu-surface-fill',
+    '--dsw-alias-menu-group-header-fill',
+    '--dsw-alias-bg-document-preview',
+    '--dsw-specific-login-input',
+    '--dsw-alias-markdown-citation',
+    '--dsw-alias-markdown-placeholder',
+    '--dsw-alias-markdown-code-segment-unselected',
+    '--dsw-alias-file-diff-added-bg',
+    '--dsw-alias-file-diff-added-gutter',
+    '--dsw-alias-file-diff-deleted-bg',
+    '--dsw-alias-file-diff-deleted-gutter',
+    '--dsw-alias-bg-mask-drop'
+  ]
+  for (const name of surfaceNames) {
+    const pair = tokens[name]
+    assert.ok(pair, '缺少表面 token：' + name)
+    assert.ok(luminance(pair.light) < 0.2, name + ' 的 light 值太亮：' + pair.light + '（浅字会被吞掉）')
+    assert.ok(luminance(pair.dark) < 0.2, name + ' 的 dark 值太亮：' + pair.dark)
+    assert.ok(contrast(tokens['--dsw-alias-label-primary'].light, pair.light) >= 4.5, name + ' 上的浅字对比度不足')
+  }
+})
+
 check('token 每个都是 { light, dark } 双值、6/8 位 hex', () => {
   const tokens = calls.override[0].tokens
   const names = Object.keys(tokens)
-  assert.equal(names.length, 34, '应当是 28 个中性 + 6 个强调派生，实际 ' + names.length)
+  assert.equal(names.length, 54, '应当是 48 个中性 + 6 个强调派生，实际 ' + names.length)
   for (const name of names) {
-    assert.match(name, /^--dsw-(alias|specific)-/, '不是 --dsw-alias-/--dsw-specific- 前缀：' + name)
+    assert.match(name, /^--dsw-[a-z0-9-]+$/, '不是 --dsw-* token：' + name)
     const pair = tokens[name]
     assert.equal(typeof pair, 'object', name + ' 不是对象')
     for (const mode of ['light', 'dark']) {
@@ -307,7 +355,7 @@ check('换色会重下 override 层并持久化', () => {
 // ---------------------------------------------------------------- 3. 对比度体检
 
 function luminance(hex) {
-  const n = parseInt(hex.slice(1), 16)
+  const n = parseInt(hex.slice(1, 7), 16)
   const channels = [(n >> 16) & 255, (n >> 8) & 255, n & 255]
   const linear = channels.map((channel) => {
     const s = channel / 255
@@ -320,6 +368,16 @@ function contrast(a, b) {
   return (x + 0.05) / (y + 0.05)
 }
 
+function blendOver(foreground, background, alpha) {
+  const fg = parseInt(foreground.slice(1), 16)
+  const bg = parseInt(background.slice(1), 16)
+  const channels = [16, 8, 0].map((shift) => {
+    const f = (fg >> shift) & 255
+    const b = (bg >> shift) & 255
+    return Math.round(f * alpha + b * (1 - alpha))
+  })
+  return '#' + channels.map((channel) => channel.toString(16).padStart(2, '0')).join('')
+}
 const table = []
 const expectContrast = (label, foreground, background, minimum) => {
   const value = contrast(foreground, background)
@@ -347,6 +405,12 @@ for (const accentId of ['isaf', 'cyan', 'amber']) {
       tokens['--dsw-alias-brand-primary'][mode],
       4.5
     )
+    // 设置卡片 / 菜单 / chip 选中态：这三处曾出现「白底 + #d8ecff 浅字」。
+    const chipAlpha = mode === 'light' ? 0.24 : 0.22
+    const chipBg = blendOver(tokens['--dsw-alias-brand-primary'][mode], bg, chipAlpha)
+    row.module = expectContrast('[' + accentId + '·' + mode + '] label-primary / bg-module-platform', tokens['--dsw-alias-label-primary'][mode], tokens['--dsw-alias-bg-module-platform'][mode], 4.5)
+    row.menu = expectContrast('[' + accentId + '·' + mode + '] label-primary / menu-surface-fill', tokens['--dsw-alias-label-primary'][mode], tokens['--dsw-menu-surface-fill'][mode], 4.5)
+    row.chip = expectContrast('[' + accentId + '·' + mode + '] label-primary / chip-selected', tokens['--dsw-alias-label-primary'][mode], chipBg, 4.5)
     table.push(row)
   }
 }
@@ -498,7 +562,7 @@ console.log('\nbundle / host 自检')
 for (const line of notes.filter((line) => !line.includes('对比度'))) console.log(line)
 
 console.log('\n对比度体检（全部三个强调色）')
-console.log('  ' + ['强调色·模式', '主文本', '次级', '三级', '说明文字', '品牌色上的文字'].join(' | '))
+console.log('  ' + ['强调色·模式', '主文本', '次级', '三级', '说明文字', '品牌色上的文字', '模块底', '菜单底', '选中 chip'].join(' | '))
 for (const row of table) {
   console.log('  ' + [
     row.accent + '·' + row.mode,
@@ -506,7 +570,10 @@ for (const row of table) {
     row.secondary.toFixed(2),
     row.tertiary.toFixed(2),
     row.caption.toFixed(2),
-    row.onBrand.toFixed(2)
+    row.onBrand.toFixed(2),
+    row.module.toFixed(2),
+    row.menu.toFixed(2),
+    row.chip.toFixed(2)
   ].join(' | '))
 }
 

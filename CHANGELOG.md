@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.8 — 2026-11-09
+
+- 修复：开启主题后窗口顶部无法拖动。0.1.7 给 `_frame` 加的 `::before` 1px 高光线覆盖了 Windows 无边框窗口的
+  `-webkit-app-region:drag` 拖拽条（布局用它撑满标题栏）；改用 frame 的 inset box-shadow 画高光，
+  并加回归断言禁止再碰 `_frame::before`。
+- 修复：设置里外观主题卡片、stepper、switcher 等浅色选项在 light 模式下白底浅字。新增 20 个「模块表面」token
+  （`bg-module-platform`、`menu-surface-fill`、`specific-tip`、markdown 占位/引用、文件 diff、拖拽遮罩等），
+  light 一律压成深蓝，token 总数 34 → 54。
+- 修复：强调色 chip 选中态借用 `--dsw-alias-button-primary-dimmed`（light 近白灰）；改成用当前强调色 `color-mix` 自绘。
+- 自检扩到 26 项契约 + 48 项对比度（新增模块底、菜单底、选中 chip 三组），全过。
+
 ## 0.1.7 — 2026-11-08
 
 - 以 `startup-poster.png` 为配色参考：壁纸改为中心留亮、边缘压暗的冷蓝径向遮罩，突出 ISAF 徽章。

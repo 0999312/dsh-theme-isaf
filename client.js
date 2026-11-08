@@ -11,7 +11,7 @@
  * 想用额外模块必须在 package.json 的 `dsh.client.external` 里逐个声明。
  *
  * 本主题做四件事：
- *   1. 用 `ctx.theme.overrideTokens(source, tokens)` 覆盖 28 个中性 + 6 个强调派生 token；
+ *   1. 用 `ctx.theme.overrideTokens(source, tokens)` 覆盖 48 个中性 + 6 个强调派生 token；
  *   2. 把 accent 选择持久化到 localStorage（零依赖，避开 schemastery/host Config）；
  *   3. 在设置 → 通用 里自加一行（`settings.general.item`），带壁纸横幅与三个强调色；
  *   4. 给应用外壳加 12px 壁纸边框与一层不挡鼠标的 CRT 扫描线。
@@ -89,7 +89,32 @@ window.__ModuleLoader__.load({
       '--dsw-specific-bubble': { light: '#14283e', dark: '#10243a' },
       // 滚动条
       '--dsw-alias-scrollbar-bg-l1': { light: '#2b4057', dark: '#2a3f55' },
-      '--dsw-alias-scrollbar-hover-l1': { light: '#425a73', dark: '#3f566e' }
+      '--dsw-alias-scrollbar-hover-l1': { light: '#425a73', dark: '#3f566e' },
+      // 模块表面 —— DSH 的 light 调色板里这些全是近白（设置卡片、菜单、提示、
+      // 多选、ghost 按钮按下态……）。本主题的 light 也是深色 HUD，这里必须
+      // 一并压成深蓝，否则就是「白底 + #d8ecff 浅字」的隐形文字。
+      '--dsw-alias-bg-module-platform': { light: '#16304a', dark: '#11243a' },
+      '--dsw-alias-bg-multi-select': { light: '#17314c', dark: '#12253b' },
+      '--dsw-alias-interactive-bg-hover-solid': { light: '#162c44', dark: '#122238' },
+      '--dsw-alias-button-ghost-active-fill': { light: '#1d3653', dark: '#172a40' },
+      '--dsw-alias-button-ghost-active-hover': { light: '#24415f', dark: '#1d3250' },
+      '--dsw-specific-tip': { light: '#0f2137', dark: '#0b1725' },
+      '--dsw-menu-surface-fill': { light: '#0d1e31', dark: '#08121f' },
+      '--dsw-alias-menu-group-header-fill': { light: '#0f2236', dark: '#0a1626' },
+      '--dsw-alias-bg-document-preview': { light: '#0e2033', dark: '#0a1626' },
+      '--dsw-specific-login-input': { light: '#0c1a2a', dark: '#08131f' },
+      '--dsw-alias-markdown-citation': { light: '#12283f', dark: '#0d1a2b' },
+      '--dsw-alias-markdown-placeholder': { light: '#0f2134', dark: '#0b1828' },
+      '--dsw-alias-markdown-code-segment-unselected': { light: '#152b42', dark: '#101f31' },
+      // 文件 diff 与拖拽遮罩同理：light 的浅绿/浅红行、70% 白遮罩在 HUD 上
+      // 同样是浅底配 #d8ecff。diff 文字继承 label-primary，所以行底色必须压深。
+      '--dsw-alias-file-diff-added-bg': { light: '#0f2a1c', dark: '#0b2116' },
+      '--dsw-alias-file-diff-added-gutter': { light: '#143624', dark: '#0f2a1c' },
+      '--dsw-alias-file-diff-added-marker': { light: '#4fd08a', dark: '#5fdf9a' },
+      '--dsw-alias-file-diff-deleted-bg': { light: '#2d1518', dark: '#251013' },
+      '--dsw-alias-file-diff-deleted-gutter': { light: '#38191d', dark: '#2d1418' },
+      '--dsw-alias-file-diff-deleted-marker': { light: '#ff7b74', dark: '#ff928c' },
+      '--dsw-alias-bg-mask-drop': { light: '#08131fb3', dark: '#050b16b3' }
     }
 
     const ACCENT_LABEL_KEYS = {
@@ -124,8 +149,12 @@ window.__ModuleLoader__.load({
       'border:1px solid var(--dsw-alias-border-l2);background:transparent;color:var(--dsw-alias-label-primary);',
       'font:inherit;font-size:13px;line-height:18px;cursor:pointer}',
       '.tsk-chip:hover{background:var(--dsw-alias-interactive-bg-hover)}',
-      '.tsk-chip[aria-pressed="true"]{border-color:var(--dsw-alias-border-l4);',
-      'background:var(--dsw-alias-button-primary-dimmed)}',
+      // 选中态用当前强调色自己调和：不要再借 DSH 的 button-primary-dimmed，
+      // 它在 light 调色板里是近白灰，会让 HUD 的浅色字变成白底白字。
+      '.tsk-chip[aria-pressed="true"]{border-color:var(--tsk-dot-light);',
+      'background:color-mix(in srgb,var(--tsk-dot-light) 24%,transparent)}',
+      'body[data-ds-dark-theme] .tsk-chip[aria-pressed="true"]{border-color:var(--tsk-dot-dark);',
+      'background:color-mix(in srgb,var(--tsk-dot-dark) 22%,transparent)}',
       '.tsk-dot{width:12px;height:12px;border-radius:6px;background:var(--tsk-dot-light);',
       'box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}',
       'body[data-ds-dark-theme] .tsk-dot{background:var(--tsk-dot-dark)}',
@@ -251,8 +280,10 @@ window.__ModuleLoader__.load({
       // 采样成黑色，壁纸会被整片遮掉；只用 color-mix 的半透明底色。
       '#root > div[class*="_frame"],#root div[class*="_frame"]{',
       'background:transparent!important;border-radius:0!important;',
-      'box-shadow:0 0 0 1px rgba(126,183,230,.34),0 0 42px rgba(100,190,240,.15),0 22px 70px rgba(0,0,0,.38),inset 0 0 46px rgba(3,9,18,.16)}',
-      '#root div[class*="_frame"]::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;z-index:2;pointer-events:none;background:linear-gradient(90deg,rgba(126,183,230,0),rgba(126,183,230,.55),rgba(100,224,234,.32),rgba(126,183,230,0))}',
+      // 顶部 1px 冷蓝高光用 inset box-shadow 画。绝不能再给 _frame 加 ::before：
+      // 那个伪元素是 Windows 无边框窗口的 -webkit-app-region:drag 拖拽条，
+      // 布局用 height:var(--dsh-windows-titlebar-height) 把它撑满标题栏。
+      'box-shadow:0 0 0 1px rgba(126,183,230,.34),0 0 42px rgba(100,190,240,.15),0 22px 70px rgba(0,0,0,.38),inset 0 0 46px rgba(3,9,18,.16),inset 0 1px 0 rgba(126,183,230,.45)}',
       '#root [class*="_sidebarCol"]{',
       'background:rgba(9,24,39,.90)!important;',
       'background:color-mix(in srgb,var(--dsw-specific-sidebar-fill) 86%,transparent)!important;',

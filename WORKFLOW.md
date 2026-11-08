@@ -1,14 +1,14 @@
 # 一轮对话出主题
 
 **输入**：一条提示词 + 一张风格参考图。
-**输出**：改好的 `client.js`（34 个 token × 明暗双值）+ 可选的外壳资源（启动画面 / 壁纸 / CRT）+ 自检全绿。
+**输出**：改好的 `client.js`（54 个 token × 明暗双值）+ 可选的外壳资源（启动画面 / 壁纸 / CRT）+ 自检全绿。
 **约束**：一轮完成，agent 不追问；人不做手工取色，也不靠"感觉行不行"拍板。
 
 这套流程能压到一轮，靠三个收窄：
 
-1. **决策空间是封闭的。** 主题不是自由设计，是 28 个中性 token + 6 个强调派生 token 的双值映射，落位由语义定死。
+1. **决策空间是封闭的。** 主题不是自由设计，是 48 个中性 token + 6 个强调派生 token 的双值映射，落位由语义定死。
 2. **取色是机械的。** `scripts/palette.ps1` 把参考图压成 8 个色簇，给出面积、亮度、饱和度、对比度、角色提示；不需要人眼估 hex。
-3. **验收是机器判的。** `scripts/smoke.mjs` 53 项断言（23 项契约 + 30 项 WCAG），红了就是红了，绿了就能交付。
+3. **验收是机器判的。** `scripts/smoke.mjs` 74 项断言（26 项契约 + 48 项 WCAG），红了就是红了，绿了就能交付。
 
 所以一轮的真实工作量是：读一张表、做 5–8 个取舍、跑一次自检。
 
@@ -69,7 +69,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\palette.ps1 -Path "<
 
 四类凑不齐（图里只有一个有色相的中性调）时按字节：底用 `L` 极值，正文用其反色，强调色走提示词里给的 hex。
 
-### 第 3 步：铺 28 个中性 token
+### 第 3 步：铺中性 token
 
 按第 4 节的组别落位。层级不要手填 hex，用 client.js 自带的 `mix(color, target, weight)` 从基色派生，权重固定：
 
@@ -174,7 +174,7 @@ no  hex       share      L onWhite onBlack   sat  hint
 | 高饱和 | `sat ≥ 30`，`share` 1%–20% | `brand-primary` / `link` / `state-business-*` |
 | 暖/冷偏色表面 | `L` 0.45–0.65 且色相明显 | `markdown-*` / `sidebar-*` / `bubble` 的底色偏移 |
 
-### 28 个中性 token 的分组与落位
+### 中性 token 的分组与落位
 
 ```text
 画布层级  bg-base · bg-layer-1/2/3 · bg-overlay
@@ -186,6 +186,8 @@ no  hex       share      L onWhite onBlack   sat  hint
 滚动条    scrollbar-bg-l1 / scrollbar-hover-l1
 ```
 
+另有 20 个「模块表面」token（设置卡片 `bg-module-platform`、`menu-surface-fill`、`specific-tip`、markdown 占位/引用、文件 diff、拖拽遮罩等），见 `client.js` 的 `NEUTRAL_TOKENS` 尾段：它们默认在 light 下是近白，**light 模式同样要压深**，否则就是白底浅字。
+
 `label-primary-foreground` 是**品牌色上的文字色**：`brand-primary` 深 → 用 `#ffffff`；`brand-primary` 浅 → 用近黑的底色调。它和 `label-primary` 是两回事，别混。
 
 ---
@@ -194,12 +196,12 @@ no  hex       share      L onWhite onBlack   sat  hint
 
 `node scripts/smoke.mjs` 跑两组：
 
-**A. 契约（23 项）**
+**A. 契约（26 项）**
 
-- **A1 浏览器半（11 项）** —— bundle 注册 id、插件对象形状、`factory` 只 `require('react')`、`overrideTokens` 的 source 等于包名、每个 token 都是 `{light, dark}` 双值、设置行注册在 `settings.general.item` 上、zh+en 词典齐、行组件渲染出三个按钮、点按钮回写、换色重下一层并持久化、外壳样式与 CRT 层已安装。
+- **A1 浏览器半（14 项）** —— bundle 注册 id、插件对象形状、`factory` 只 `require('react')`、`overrideTokens` 的 source 等于包名、每个 token 都是 `{light, dark}` 双值、设置行注册在 `settings.general.item` 上、zh+en 词典齐、行组件渲染出三个按钮、点按钮回写、换色重下一层并持久化、外壳样式与 CRT 层已安装、不再覆盖 `_frame::before`（Windows 拖拽条）、chip 选中态不借 dimmed token、13 个表面 token 在 light 下仍是深底。
 - **A2 宿主半（12 项）** —— `ENTRY_ID` 与 cordis 行 id 一致、`webserver/index-inject` 推了首帧样式（含 `[data-dsh-boot]` / `startup-poster.png` / 隐藏默认字标）、`BOOT_DEFAULTS_SCRIPT` 只补 null（空、off、已选三种情形）、`/theme-isaf/assets` 前缀路由已注册、壁纸/启动封面/启动 MP4 的 MIME 和字节数正确、HEAD 不带 body、相对 URL 也能取到资源、未知资源与目录探测 404、非 GET/HEAD 405。
 
-**B. 对比度（30 项）** —— 三个强调色 × 明暗两套 × 五个位点：
+**B. 对比度（48 项）** —— 三个强调色 × 明暗两套 × 八个位点：
 
 | 位点 | 阈值 | 为什么是这个数 |
 | --- | --- | --- |
@@ -208,6 +210,9 @@ no  hex       share      L onWhite onBlack   sat  hint
 | `label-tertiary` | ≥ 4.5 | 次要说明 |
 | `label-caption` | ≥ 4.5 | 辅助文字（最容易红） |
 | `label-primary-foreground` on `brand-primary` | ≥ 4.5 | 按钮文字 |
+| `label-primary` on `bg-module-platform` | ≥ 4.5 | 设置卡片 / 选中主题卡片 |
+| `label-primary` on `menu-surface-fill` | ≥ 4.5 | 下拉菜单 / 提示浮层 |
+| `label-primary` on chip-selected | ≥ 4.5 | 强调色 chip 选中态（24%/22% 混 bg-base） |
 
 ### 红灯 → 修法
 
@@ -270,17 +275,17 @@ no  hex       share      L onWhite onBlack   sat  hint
 **闸门输出**：
 
 ```text
-  isaf·light   | 14.49 | 10.94 | 8.46 | 6.97 | 5.38
-  isaf·dark    | 15.64 | 11.25 | 8.27 | 6.58 | 8.95
-  cyan·light   | 14.49 | 10.94 | 8.46 | 6.97 | 6.84
-  cyan·dark    | 15.64 | 11.25 | 8.27 | 6.58 | 12.56
-  amber·light  | 14.49 | 10.94 | 8.46 | 6.97 | 6.80
-  amber·dark   | 15.64 | 11.25 | 8.27 | 6.58 | 11.16
-  (30 项对比度断言，30 通过)
+  isaf·light   | 14.49 | 10.94 | 8.46 | 6.97 | 5.38 | 11.16 | 13.92 | 11.47
+  isaf·dark    | 15.64 | 11.25 | 8.27 | 6.58 | 8.95 | 12.46 | 14.93 | 10.65
+  cyan·light   | 14.49 | 10.94 | 8.46 | 6.97 | 6.84 | 11.16 | 13.92 | 12.06
+  cyan·dark    | 15.64 | 11.25 | 8.27 | 6.58 | 12.56 | 12.46 | 14.93 | 9.61
+  amber·light  | 14.49 | 10.94 | 8.46 | 6.97 | 6.80 | 11.16 | 13.92 | 12.46
+  amber·dark   | 15.64 | 11.25 | 8.27 | 6.58 | 11.16 | 12.46 | 14.93 | 10.16
+  (48 项对比度断言，48 通过)
   全部通过。
 ```
 
-**复现**：把上面 28 行贴进 `NEUTRAL_TOKENS`、`ACCENTS.isaf` 换成 `#3e6bac` / `#7db4e6`，`node scripts/smoke.mjs`。
+**复现**：把上面 41 行贴进 `NEUTRAL_TOKENS`、`ACCENTS.isaf` 换成 `#3e6bac` / `#7db4e6`，`node scripts/smoke.mjs`。
 
 ---
 

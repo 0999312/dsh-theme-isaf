@@ -56,7 +56,7 @@ ISAF 的全称是 **Independent State Allied Forces**，中文常译“独立国
 ### 方式一：从 tgz 安装
 
 ~~~powershell
-dsh plugin --profile web add <path-to>/dsh-theme-isaf-0.1.7.tgz
+dsh plugin --profile web add <path-to>/dsh-theme-isaf-0.1.8.tgz
 ~~~
 
 ### 方式二：从仓库链目录
@@ -95,7 +95,7 @@ dsh-theme-isaf/
 ├─ package.json        # DSH bundle / client 清单
 ├─ cordis.patch.yml    # Loader 行：id theme-isaf，name dsh-theme-isaf
 ├─ index.js            # 宿主半：首帧 CSS、启动默认值、/theme-isaf/assets 路由
-├─ client.js           # 浏览器半：28+6 token、HUD 外壳、CRT、设置行
+├─ client.js           # 浏览器半：48+6 token、HUD 外壳、CRT、设置行
 ├─ assets/
 │  ├─ startup.mp4      # 启动动画（H.264 + AAC，638×478）
 │  ├─ startup-poster.png
@@ -119,16 +119,16 @@ node scripts/smoke.mjs
 
 输出应包含：
 
-- 23 项 bundle / host 契约断言；
-- 30 项 WCAG 对比度断言（3 个强调色 × light/dark × 5 个前景/背景组合）；
+- 26 项 bundle / host 契约断言；
+- 48 项 WCAG 对比度断言（3 个强调色 × light/dark × 8 个前景/背景组合）；
 - 最后一行 `全部通过。`。
 
 当前主文字对比度：
 
-| 模式 | 主文本 | 次级 | 三级 | 说明文字 | 品牌色上的文字 |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| ISAF light | 14.49 | 10.94 | 8.46 | 6.97 | 5.38 |
-| ISAF dark | 15.64 | 11.25 | 8.27 | 6.58 | 8.95 |
+| 模式 | 主文本 | 次级 | 三级 | 说明文字 | 品牌色上的文字 | 模块底 | 菜单底 | 选中 chip |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| ISAF light | 14.49 | 10.94 | 8.46 | 6.97 | 5.38 | 11.16 | 13.92 | 11.47 |
+| ISAF dark | 15.64 | 11.25 | 8.27 | 6.58 | 8.95 | 12.46 | 14.93 | 10.65 |
 
 ## 定制
 
@@ -170,5 +170,5 @@ node scripts/smoke.mjs
 
 ## 版本
 
-当前 `0.1.7`：海报式中心辉光、更轻的 CRT、新的 ISAF 预简报启动视频。
+当前 `0.1.8`：修复窗口顶部拖动回归与设置浅色选项白底浅字，token 扩到 54 个。
 完整变更见 [CHANGELOG.md](CHANGELOG.md)。
