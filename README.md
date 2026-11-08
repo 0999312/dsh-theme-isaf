@@ -101,7 +101,9 @@ dsh-theme-isaf/
 │  ├─ startup-poster.png
 │  └─ wallpaper.png    # 2560×1440 ISAF 壁纸
 ├─ scripts/
-│  └─ smoke.mjs        # 无浏览器自检
+│  ├─ smoke.mjs        # 无浏览器自检
+│  └─ palette.ps1      # 参考图取色（色簇 / WCAG 对比度）
+├─ WORKFLOW.md         # 一轮出主题的工作流与 token 示例
 ├─ CHANGELOG.md
 ├─ LICENSE
 └─ README.md
